@@ -52,7 +52,7 @@ set.seed(123)
 
 
 mod.rdf = randomForest(target ~ ., data = train2_train[,-1], 
-                       ntree=300,importance=T)
+                       ntree=4800,importance=T)
 
 pred.rdf = predict(mod.rdf, train2_valid)
 
@@ -64,6 +64,7 @@ out.rdf = data.frame(id = train2_valid$id,
 
 forecast::accuracy(out.rdf$real, out.rdf$pred)
 
+NMAE(out$real, out.rdf$pred)
 #######################################################################
 
 #######################################################################
@@ -88,7 +89,7 @@ out.gbm = data.frame(id = train2_valid$id,
 
 forecast::accuracy(out.gbm$real, out.gbm$pred)
 
-
+NMAE(out$real, out$gbm_pred)
 #######################################################################
 
 #######################################################################
@@ -117,21 +118,21 @@ param.xgb <- list(subsample = 1
 
 
 
-xgb_cv <- xgb.cv(data=trainSparse,
-                 params=param.xgb,
-                 nrounds=100,
-                 prediction=TRUE,
-                 maximize=TRUE,
-                 folds=foldsCV,
-                 #early_stopping_rounds = 50,
-                 print_every_n = 5
-)
+# xgb_cv <- xgb.cv(data=trainSparse,
+#                  params=param.xgb,
+#                  nrounds=100,
+#                  prediction=TRUE,
+#                  maximize=TRUE,
+#                  folds=foldsCV,
+#                  #early_stopping_rounds = 50,
+#                  print_every_n = 5
+# )
 
 #mod.xgb = xgboost(data = trainSparse, nrounds = 300)
 mod.xgb = xgboost(data = trainSparse,
-                  eta = 0.09,
+                  eta = 0.05,
                   nfold = 5, 
-                  max_depth = 10, 
+                  max_depth = 30, 
                   min_child_weight = 1.2,
                   gamma = 0,
                   nround = 100, 
@@ -157,7 +158,7 @@ forecast::accuracy(out.xgb$real, out.xgb$pred)
 
 
 
-
+NMAE(out$real, out.xgb$pred)
 
 
 #######################################################################
@@ -197,7 +198,7 @@ lgb.normalizedgini = function(preds, dtrain){
 
 
 
-best.iter = 500
+best.iter = 700
 
 # Train final model
 mod.lgb = lgb.train(params = lgb.param, data = lgb.train,
@@ -213,7 +214,7 @@ out.lgb = data.frame(id = train2_valid$id,
 
 forecast::accuracy(out.lgb$real, out.lgb$pred)
 
-
+NMAE(out$real, out.lgb$pred)
 
 
 

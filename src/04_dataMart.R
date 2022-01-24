@@ -3,7 +3,7 @@
 
 source("./src/02_preprocessing.R", encoding = "UTF-8")
 
-data2 = read.csv("./data/prep/data1.csv")
+data2 = read.csv(paste0("./data/prep/",sub_ver,".csv"))
 
 data2$id = as.character(data2$id)
 data2 %>% str

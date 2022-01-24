@@ -47,8 +47,8 @@ out.lm = data.frame(id = test2$id,
 set.seed(123)
 
 
-mod.rdf = randomForest(target ~ ., data = train2[,-1], 
-                       ntree=300,importance=T)
+mod.rdf = randomForest(target ~ ., data = train2_train[,-1], 
+                       ntree=4800,importance=T)
 
 pred.rdf = predict(mod.rdf, test2)
 

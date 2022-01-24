@@ -18,10 +18,18 @@ out = do.call("cbind", list(out.lm,
                             out.svr))
 out = out[c(1,grep("pred",colnames(out)))]
 
-submission = out %>% select(id, rdf_pred)
-colnames(submission)[2] = "target"
+# submission = out %>% 
+#   group_by(id) %>% 
+#   summarise(target = mean(rdf_pred, gbm_pred, xgb_pred)) %>% as.data.frame()
 
+submission = out %>% 
+  group_by(id) %>% 
+  summarise(target = rdf_pred) %>% as.data.frame()
+
+
+submission$id = as.integer(as.character(submission$id))
+submission = submission %>% arrange(id)
 
 submission %>% head
-
-write.csv(submission, "./out/submission/sub1.csv", row.names = FALSE)
+sub_ver = "sub5"
+write.csv(submission, paste0("./out/submission/",sub_ver,".csv"), row.names = FALSE)
