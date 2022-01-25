@@ -17,6 +17,7 @@ out = do.call("cbind", list(out.lm,
                             out.lgb,
                             out.svr))
 out = out[c(1,grep("pred",colnames(out)))]
+out[,2:ncol(out)] = exp(out[,2:ncol(out)])-1
 
 # submission = out %>% 
 #   group_by(id) %>% 
@@ -31,5 +32,5 @@ submission$id = as.integer(as.character(submission$id))
 submission = submission %>% arrange(id)
 
 submission %>% head
-sub_ver = "sub5"
+
 write.csv(submission, paste0("./out/submission/",sub_ver,".csv"), row.names = FALSE)
