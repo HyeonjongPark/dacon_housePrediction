@@ -120,14 +120,12 @@ xgb_cv <- xgb.cv(data=trainSparse,
 
 #mod.xgb = xgboost(data = trainSparse, nrounds = 300)
 mod.xgb = xgboost(data = trainSparse,
-                  eta = 0.09,
-                  nfold = 5, 
-                  max_depth = 10, 
-                  min_child_weight = 1.2,
-                  gamma = 0,
-                  nround = 100, 
-                  subsample = 1,
-                  colsample_bytree = 0.5,
+                  eta = 0.05,
+                  nfold = 10, 
+                  max_depth = 8, 
+                  nround = 500, 
+                  subsample = 0.8,
+                  colsample_bytree = 0.8,
                   eval_metric = 'rmse',
                   verbose = 1)
 
@@ -185,7 +183,7 @@ lgb.normalizedgini = function(preds, dtrain){
 
 
 
-best.iter = 500
+best.iter = 700
 
 # Train final model
 mod.lgb = lgb.train(params = lgb.param, data = lgb.train,

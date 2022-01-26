@@ -22,15 +22,18 @@ out[,2:ncol(out)] = exp(out[,2:ncol(out)])-1
 # submission = out %>% 
 #   group_by(id) %>% 
 #   summarise(target = mean(rdf_pred, gbm_pred, xgb_pred)) %>% as.data.frame()
+out$lm_pred*0.35 + out$rdf_pred *0.35 + out$gbm_pred *0.10 + out$xgb_pred *0.20 + + out$lgb_pred*0.00 + out$svr_pred *0.00
+
+out = out %>% 
+  mutate(target = out$lm_pred*0.35 + out$rdf_pred *0.35 + out$gbm_pred *0.10 + out$xgb_pred *0.20 + + out$lgb_pred*0.00 + out$svr_pred *0.00)
+
 
 submission = out %>% 
-  group_by(id) %>% 
-  summarise(target = rdf_pred) %>% as.data.frame()
+  select(id, target)
 
-
-submission$id = as.integer(as.character(submission$id))
-submission = submission %>% arrange(id)
+# submission$id = as.integer(as.character(submission$id))
+# submission = submission %>% arrange(id)
 
 submission %>% head
 
-write.csv(submission, paste0("./out/submission/",sub_ver,".csv"), row.names = FALSE)
+write.csv(submission, paste0("./out/submission/sub9.csv"), row.names = FALSE)

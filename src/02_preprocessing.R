@@ -24,20 +24,28 @@ data1 = data %>%
 colSums(is.na(data1)) # 결측치 미존재
 
 data1 = data1 %>% mutate(Garage.Area.Cars = Garage.Area / Garage.Cars)
-# year 계산
-max(data1$Year.Built)
-max(data1$Year.Remod.Add)
-max(data1$Garage.Yr.Blt)
 
 data1 %>% filter(Garage.Yr.Blt == max(Garage.Yr.Blt)) # 2007 년을 2207로 오기재 했다고 가정
-
 data1$Garage.Yr.Blt[data1$Garage.Yr.Blt == 2207] = 2007
 
+data1 %>% head
 
-data1 = data1 %>% mutate(Garage.Yr.Blt_cal = 2010 - Garage.Yr.Blt,
-                         Year.Remod.Add_cal = 2010 - Year.Remod.Add,
-                         Year.Built_cal = 2010 - Year.Built)
+# 파생변수 추가
+data1 = data1 %>% mutate(comb.Qual = Overall.Qual + Exter.Qual + Kitchen.Qual + Bsmt.Qual)
 
+data1 = data1 %>% mutate(Garage.Yr.Blt_cal = 2011 - Garage.Yr.Blt,
+                         Year.Remod.Add_cal = 2011 - Year.Remod.Add,
+                         Year.Built_cal = 2011 - Year.Built)
+
+
+# data1 = data1 %>% mutate(comb.Built = Year.Built_cal + Year.Remod.Add_cal + Garage.Yr.Blt_cal)
+# data1 = data1 %>% mutate(comb.Area = Gr.Liv.Area + Garage.Area + Total.Bsmt.SF + X1st.Flr.SF)
+# data1 = data1 %>% mutate(comb.roomCount = Garage.Cars + Full.Bath)
+# data1 = data1 %>% mutate(comb.plusAll = abs(comb.Qual) * (abs(comb.Area) + abs(comb.roomCount)) - (abs(comb.Qual) * abs(comb.Built)))
+
+# data1$Year.Remod.Add = NULL
+# data1$Garage.Yr.Blt = NULL
+# data1$Garage.Yr.Blt_cal = NULL
 
 # 정규화 - log
 data1 %>% head
@@ -51,12 +59,11 @@ colnames(data1)[1] = "division"
 colnames(data1)[2] = "id"
 colnames(data1)[ncol(data1)] = "target"
 
-data1$Year.Built_cal %>% unique %>% sort
-data1$Year.Remod.Add_cal %>% unique %>% sort
-data1$Garage.Yr.Blt_cal %>% unique %>% sort
-
 
 
 data1 = data1 %>% relocate(target, .after = last_col())
+
+cor(data1[!is.na(data$target) ,3:ncol(data1)]) %>% tail
+
 
 write.csv(data1, paste0("./data/prep/",sub_ver,".csv"), row.names = FALSE)
