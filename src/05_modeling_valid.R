@@ -9,9 +9,8 @@ source("./src/04_dataMart.R", encoding = "UTF-8")
 ################## split -> train, test     ########################### 
 ################## lm   + 다중공선성 확인   ########################### 
 #######################################################################
+set.seed(8627)
 
-
-set.seed(123)
 proportion = 0.7
 idx = sample(1:nrow(train2), size = round(proportion * nrow(train2)))
 train2_train = train2[idx, ]
@@ -48,11 +47,11 @@ forecast::accuracy(out.lm$real, out.lm$pred)
 #######################################################################
 
 
-set.seed(123)
+#set.seed(123)
 
 
-mod.rdf = randomForest(target ~ ., data = train2_train[,-1], 
-                       ntree=4800,importance=T)
+mod.rdf = randomForest(target ~ ., data = train2_train[,-1],
+                       ntree=1000,importance=T)
 
 pred.rdf = predict(mod.rdf, train2_valid)
 
@@ -65,6 +64,31 @@ out.rdf = data.frame(id = train2_valid$id,
 forecast::accuracy(out.rdf$real, out.rdf$pred)
 
 NMAE(out$real, out.rdf$pred)
+
+# for(i in 1:10) {
+#   
+#   proportion = 0.7
+#   idx = sample(1:nrow(train2), size = round(proportion * nrow(train2)))
+#   train2_train = train2[idx, ]
+#   train2_valid = train2[-idx, ]
+#   
+#   y_train = train2_train$target
+#   y_test = train2_valid$target
+#   
+#   mod.rdf = randomForest(target ~ ., data = train2_train[,-1], 
+#                          ntree=1000,importance=T)
+#   pred.tmp = predict(mod.rdf, train2_valid)
+#   pred.rdf = (pred.rdf + pred.tmp) / 2
+#   
+#   out.rdf = data.frame(id = train2_valid$id,
+#                        real = train2_valid$target,
+#                        pred = pred.rdf)
+#   
+#   print(NMAE(out$real, out.rdf$pred))
+#   
+# }
+
+
 #######################################################################
 
 #######################################################################
@@ -103,9 +127,6 @@ testSparse  = xgb.DMatrix(data.matrix(train2_valid[,-c(1,length(train2_valid))])
 
 foldsCV <- createFolds(y_train, k=20, list=TRUE, returnTrain=FALSE)
 
-
-set.seed(123)
-
 ### 모델링
 cat("modeling\n")
 
@@ -118,17 +139,6 @@ param.xgb <- list(subsample = 1
 
 
 
-# xgb_cv <- xgb.cv(data=trainSparse,
-#                  params=param.xgb,
-#                  nrounds=100,
-#                  prediction=TRUE,
-#                  maximize=TRUE,
-#                  folds=foldsCV,
-#                  #early_stopping_rounds = 50,
-#                  print_every_n = 5
-# )
-
-#mod.xgb = xgboost(data = trainSparse, nrounds = 300)
 mod.xgb = xgboost(data = trainSparse,
                   eta = 0.05,
                   nfold = 10, 
@@ -154,8 +164,6 @@ out.xgb = data.frame(id = train2_valid$id,
 
 
 forecast::accuracy(out.xgb$real, out.xgb$pred)
-
-
 
 NMAE(out$real, out.xgb$pred)
 
@@ -249,7 +257,7 @@ out.svr = data.frame(id = train2_valid$id,
 
 forecast::accuracy(out.svr$real, out.svr$pred)
 
-
+NMAE(out$real, out.svr$pred)
 
 #######################################################################
 
@@ -277,101 +285,8 @@ out = do.call("cbind", list(out.lm,
                             out.lgb,
                             out.svr))
 out = out[c(1,2,grep("pred",colnames(out)))]
+#out[,2:ncol(out)] = 10^(out[,2:ncol(out)])-1
 out[,2:ncol(out)] = exp(out[,2:ncol(out)])-1
-# 
-# out = out %>% 
-#   group_by(id) %>% 
-#   summarise(real,
-#             lm_pred,
-#             rdf_pred,
-#             gbm_pred,
-#             xgb_pred,
-#             lgb_pred,
-#             svr_pred,
-#             lm_rdf_pred = mean(lm_pred, rdf_pred),
-#             lm_gbm_pred = mean(lm_pred, gbm_pred),
-#             lm_xgb_pred = mean(lm_pred, xgb_pred),
-#             lm_lgb_pred = mean(lm_pred, lgb_pred),
-#             lm_svr_pred = mean(lm_pred, svr_pred),
-#             rdf_gbm_pred = mean(rdf_pred, gbm_pred),
-#             rdf_xgb_pred = mean(rdf_pred, xgb_pred),
-#             rdf_lgb_pred = mean(rdf_pred, lgb_pred),
-#             rdf_svr_pred = mean(rdf_pred, svr_pred),
-#             gbm_xgb_pred = mean(gbm_pred, xgb_pred),
-#             gbm_lgb_pred = mean(gbm_pred, lgb_pred),
-#             gbm_svr_pred = mean(gbm_pred, svr_pred),
-#             xgb_lgb_pred = mean(xgb_pred, lgb_pred),
-#             xgb_svr_pred = mean(xgb_pred, svr_pred),
-#             lgb_svr_pred = mean(lgb_pred, svr_pred),
-#             lm_rdf_gbm_pred = mean(lm_pred, rdf_pred, gbm_pred),
-#             lm_rdf_xgb_pred = mean(lm_pred, rdf_pred, xgb_pred),
-#             lm_rdf_lgb_pred = mean(lm_pred, rdf_pred, lgb_pred),
-#             lm_rdf_svr_pred = mean(lm_pred, rdf_pred, svr_pred),
-#             lm_gbm_xgb_pred = mean(lm_pred, gbm_pred, xgb_pred),
-#             lm_gbm_lgb_pred = mean(lm_pred, gbm_pred, lgb_pred),
-#             lm_gbm_svr_pred = mean(lm_pred, gbm_pred, svr_pred),
-#             lm_xgb_lgb_pred = mean(lm_pred, xgb_pred, lgb_pred),
-#             lm_xgb_svr_pred = mean(lm_pred, xgb_pred, svr_pred),
-#             lm_lgb_svr_pred = mean(lm_pred, lgb_pred, svr_pred),
-#             lm_lgb_svr_pred = mean(lm_pred, lgb_pred, svr_pred),
-#             rdf_gbm_xgb_pred = mean(rdf_pred, gbm_pred, xgb_pred),
-#             rdf_gbm_lgb_pred = mean(rdf_pred, gbm_pred, lgb_pred),
-#             rdf_gbm_svr_pred = mean(rdf_pred, gbm_pred, svr_pred),
-#             rdf_xgb_lgb_pred = mean(rdf_pred, xgb_pred, lgb_pred),
-#             rdf_xgb_svr_pred = mean(rdf_pred, xgb_pred, svr_pred),
-#             rdf_lgb_svr_pred = mean(rdf_pred, lgb_pred, svr_pred),
-#             gbm_xgb_lgb_pred = mean(gbm_pred, xgb_pred, lgb_pred),
-#             gbm_xgb_lgb_pred = mean(gbm_pred, xgb_pred, svr_pred),
-#             xgb_lgb_svr_pred = mean(xgb_pred, lgb_pred, svr_pred),
-#             lm_rdf_gbm_xgb_pred = mean(lm_pred, rdf_pred, gbm_pred, xgb_pred),
-#             lm_rdf_gbm_lgb_pred = mean(lm_pred, rdf_pred, gbm_pred, lgb_pred),
-#             lm_rdf_gbm_svr_pred = mean(lm_pred, rdf_pred, gbm_pred, svr_pred),
-#             lm_rdf_xgb_lgb_pred = mean(lm_pred, rdf_pred, xgb_pred, lgb_pred),
-#             lm_rdf_xgb_svr_pred = mean(lm_pred, rdf_pred, xgb_pred, svr_pred),
-#             lm_rdf_lgb_svr_pred = mean(lm_pred, rdf_pred, lgb_pred, svr_pred),
-#             lm_gbm_xgb_lgb_pred = mean(lm_pred, gbm_pred, xgb_pred, lgb_pred),
-#             lm_gbm_xgb_svr_pred = mean(lm_pred, gbm_pred, xgb_pred, svr_pred),
-#             lm_gbm_lgb_svr_pred = mean(lm_pred, gbm_pred, lgb_pred, svr_pred),
-#             lm_xgb_lgb_svr_pred = mean(lm_pred, xgb_pred, lgb_pred, svr_pred),
-#             rdf_gbm_xgb_lgb_pred = mean(rdf_pred, gbm_pred, xgb_pred, lgb_pred),
-#             rdf_gbm_xgb_svr_pred = mean(rdf_pred, gbm_pred, xgb_pred, svr_pred),
-#             rdf_xgb_lgb_svr_pred = mean(rdf_pred, xgb_pred, lgb_pred, svr_pred),
-#             gbm_xgb_lgb_svr_pred = mean(gbm_pred, xgb_pred, lgb_pred, svr_pred),
-#             lm_rdf_gbm_xgb_lgb_pred = mean(lm_pred, rdf_pred, gbm_pred, xgb_pred, lgb_pred),
-#             lm_rdf_gbm_xgb_svr_pred = mean(lm_pred, rdf_pred, gbm_pred, xgb_pred, svr_pred),
-#             lm_rdf_gbm_lgb_svr_pred = mean(lm_pred, rdf_pred, gbm_pred, lgb_pred, svr_pred),
-#             lm_rdf_xgb_lgb_svr_pred = mean(lm_pred, rdf_pred, xgb_pred, lgb_pred, svr_pred),
-#             lm_gbm_xgb_lgb_svr_pred = mean(lm_pred, gbm_pred, xgb_pred, lgb_pred, svr_pred),
-#             rdf_gbm_xgb_lgb_svr_pred = mean(rdf_pred, gbm_pred, xgb_pred, lgb_pred, svr_pred),
-#             lm_rdf_gbm_xgb_lgb_svr_pred = mean(lm_pred, rdf_pred, gbm_pred, xgb_pred, lgb_pred, svr_pred))
-# 
-# out = out %>% as.data.frame()
-# 
-# lm_eval = cbind(model_name = "Regression", forecast::accuracy(out.lm$real, out.lm$lm_pred))
-# rdf_eval = cbind(model_name = "RF", forecast::accuracy(out.rdf$real, out.rdf$rdf_pred))
-# gbm_eval = cbind(model_name = "GBM", forecast::accuracy(out.gbm$real, out.gbm$gbm_pred))
-# xgb_eval = cbind(model_name = "XGB", forecast::accuracy(out.xgb$real, out.xgb$xgb_pred))
-# lgb_eval = cbind(model_name = "LGB", forecast::accuracy(out.lgb$real, out.lgb$lgb_pred))
-# svr_eval = cbind(model_name = "SVR", forecast::accuracy(out.svr$real, out.svr$svr_pred))
-# 
-# eval = do.call("rbind", list(lm_eval, 
-#                              rdf_eval,
-#                              gbm_eval,
-#                              xgb_eval,
-#                              lgb_eval,
-#                              svr_eval))
-# 
-# eval = eval %>% as.data.frame()
-# rownames(eval) = NULL
-# 
-# eval = eval %>% arrange(MAE)
-# eval
-# 
-# for(i in 3:ncol(out)) {
-#   print(colnames(out[,c(2,i)]))
-#   print(NMAE(out[,2], out[,i]))
-# }
-
 
 NMAE(out$real, out$lm_pred)
 NMAE(out$real, out$rdf_pred)
@@ -379,48 +294,52 @@ NMAE(out$real, out$gbm_pred)
 NMAE(out$real, out$xgb_pred)
 NMAE(out$real, out$lgb_pred)
 NMAE(out$real, out$svr_pred)
-NMAE(out$real, out$rdf_pred *0.35 + out$gbm_pred *0.10 + out$svr_pred *0.00 + out$xgb_pred *0.20 + out$lm_pred*0.35 + out$lgb_pred*0.00) # 8654
 
-NMAE(out$real, out$rdf_pred *0.55 + out$gbm_pred *0.45) # 897
-NMAE(out$real, out$rdf_pred *0.55 + out$gbm_pred *0.25 + out$svr_pred *0.2) # 894
-NMAE(out$real, out$rdf_pred *0.45 + out$gbm_pred *0.25 + out$svr_pred *0.2 + out$xgb_pred *0.1) # 891
-NMAE(out$real, out$rdf_pred *0.35 + out$gbm_pred *0.25 + out$svr_pred *0.2 + out$xgb_pred *0.2) # 890
-NMAE(out$real, out$rdf_pred *0.3 + out$gbm_pred *0.2 + out$svr_pred *0.2 + out$xgb_pred *0.2 + out$lm_pred*0.1) # 886
-NMAE(out$real, out$rdf_pred *0.35 + out$gbm_pred *0.15 + out$svr_pred *0.2 + out$xgb_pred *0.2 + out$lm_pred*0.1) # 885
-NMAE(out$real, out$rdf_pred *0.45 + out$gbm_pred *0.2 + out$svr_pred *0.15 + out$xgb_pred *0.1 + out$lm_pred*0.1 + out$lgb_pred*0.) # 886
-NMAE(out$real, out$rdf_pred *0.35 + out$gbm_pred *0.10 + out$svr_pred *0.00 + out$xgb_pred *0.20 + out$lm_pred*0.35 + out$lgb_pred*0.00) # 877
 
-pred_rate = seq(0,1,0.05)
+# comPlusVec = train2_valid %>% mutate(comb.Built = Year.Built_cal + Year.Remod.Add_cal + Garage.Yr.Blt_cal) %>% 
+#   transform(comb.Area = Gr.Liv.Area + Garage.Area + Total.Bsmt.SF + X1st.Flr.SF) %>% 
+#   transform(comb.roomCount = Garage.Cars + Full.Bath) %>% 
+#   transform(comb.plusAll = abs(comb.Qual) * (abs(comb.Area) + abs(comb.roomCount)) - (abs(comb.Qual) * abs(comb.Built))) %>% 
+#   select(comb.plusAll)
+# comPlusVec$comb.plusAll
+# NMAE(out$real, out$lm_pred*0.50 + out$rdf_pred *0.15 + out$gbm_pred *0.10 + out$xgb_pred *0.15 + out$lgb_pred*0.10 + out$svr_pred *0.00) # 8654
 
-rate_df = data.frame()
-for(lm_rate in pred_rate) {
-  for(rdf_rate in pred_rate) {
-    for(gbm_rate in pred_rate) {
-      for(xgb_rate in pred_rate) {
-        for(lgb_rate in pred_rate) {
-          for(svr_rate in pred_rate) {
 
-            eval_nmae = NMAE(out$real,
-                   out$lm_pred*lm_rate + out$rdf_pred*rdf_rate + out$gbm_pred*gbm_rate + out$xgb_pred*xgb_rate + out$lgb_pred*lgb_rate + out$svr_pred*svr_rate)
-            if(lm_rate + rdf_rate + gbm_rate + xgb_rate + lgb_rate + svr_rate == 1) {
-              tmp = data.frame(lm_rate = lm_rate,
-                               rdf_rate = rdf_rate,
-                               gbm_rate = gbm_rate,
-                               xgb_rate = xgb_rate,
-                               lgb_rate = lgb_rate,
-                               svr_rate = svr_rate,
-                               nmae = eval_nmae)
-              rate_df = rbind(rate_df, tmp)
+NMAE(out$real, out$lm_pred*0.35 + out$rdf_pred *0.35 + out$gbm_pred *0.10 + out$xgb_pred *0.20 + out$lgb_pred*0.00 + out$svr_pred *0.00) # 8654
+NMAE(out$real, out$lm_pred*0.50 + out$rdf_pred *0.15 + out$gbm_pred *0.10 + out$xgb_pred *0.15 + out$lgb_pred*0.10 + out$svr_pred *0.00) # 8654
 
-            }
 
-          }
-        }
-      }
-    }
-  }
-  print(lm_rate)
-}
-Sys.time() # 2시간 소요
-rate_df %>% arrange(nmae) %>% head
+# pred_rate = seq(0,1,0.05)
+# 
+# rate_df = data.frame()
+# for(lm_rate in pred_rate) {
+#   for(rdf_rate in pred_rate) {
+#     for(gbm_rate in pred_rate) {
+#       for(xgb_rate in pred_rate) {
+#         for(lgb_rate in pred_rate) {
+#           for(svr_rate in pred_rate) {
+# 
+#             eval_nmae = NMAE(out$real,
+#                    out$lm_pred*lm_rate + out$rdf_pred*rdf_rate + out$gbm_pred*gbm_rate + out$xgb_pred*xgb_rate + out$lgb_pred*lgb_rate + out$svr_pred*svr_rate)
+#             if(lm_rate + rdf_rate + gbm_rate + xgb_rate + lgb_rate + svr_rate == 1) {
+#               tmp = data.frame(lm_rate = lm_rate,
+#                                rdf_rate = rdf_rate,
+#                                gbm_rate = gbm_rate,
+#                                xgb_rate = xgb_rate,
+#                                lgb_rate = lgb_rate,
+#                                svr_rate = svr_rate,
+#                                nmae = eval_nmae)
+#               rate_df = rbind(rate_df, tmp)
+# 
+#             }
+# 
+#           }
+#         }
+#       }
+#     }
+#   }
+#   print(lm_rate)
+# }
+# Sys.time() # 2시간 소요
+# rate_df %>% arrange(nmae) %>% head
 

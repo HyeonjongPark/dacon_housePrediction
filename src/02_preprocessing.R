@@ -37,15 +37,20 @@ data1 = data1 %>% mutate(Garage.Yr.Blt_cal = 2011 - Garage.Yr.Blt,
                          Year.Remod.Add_cal = 2011 - Year.Remod.Add,
                          Year.Built_cal = 2011 - Year.Built)
 
-
-# data1 = data1 %>% mutate(comb.Built = Year.Built_cal + Year.Remod.Add_cal + Garage.Yr.Blt_cal)
+data1 = data1 %>% mutate(comb.Built = Year.Built_cal + Year.Remod.Add_cal + Garage.Yr.Blt_cal)
 # data1 = data1 %>% mutate(comb.Area = Gr.Liv.Area + Garage.Area + Total.Bsmt.SF + X1st.Flr.SF)
 # data1 = data1 %>% mutate(comb.roomCount = Garage.Cars + Full.Bath)
 # data1 = data1 %>% mutate(comb.plusAll = abs(comb.Qual) * (abs(comb.Area) + abs(comb.roomCount)) - (abs(comb.Qual) * abs(comb.Built)))
 
+
 # data1$Year.Remod.Add = NULL
 # data1$Garage.Yr.Blt = NULL
+# data1$Year.Built = NULL
+# data1$Year.Remod.Add_cal = NULL
 # data1$Garage.Yr.Blt_cal = NULL
+# data1$Year.Built_cal = NULL
+
+
 
 # 정규화 - log
 data1 %>% head
@@ -54,6 +59,8 @@ data1 = data1 %>% relocate(target, .after = last_col())
 data1 = cbind(data1$division,
               data1$id,
               as.data.frame(log(data1[,3:(ncol(data1))]+1)))
+
+
 
 colnames(data1)[1] = "division"
 colnames(data1)[2] = "id"

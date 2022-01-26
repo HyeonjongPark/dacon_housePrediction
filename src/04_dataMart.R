@@ -14,4 +14,11 @@ test2 = data2 %>% filter(division == "test")
 train2$division = NULL
 test2$division = NULL
 
+# python run set
+train3 = train2
+test3 = test2
+test3$target = NULL
+fwrite(train3, "./data/prep/train3.csv")
+fwrite(test3, "./data/prep/test3.csv")
+
 ############

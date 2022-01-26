@@ -15,7 +15,6 @@ source("./src/04_dataMart.R", encoding = "UTF-8")
 #######################################################################
 
 
-set.seed(123)
 
 y_train = train2$target
 y_test = test2$target
@@ -44,8 +43,6 @@ out.lm = data.frame(id = test2$id,
 #######################################################################
 
 
-set.seed(123)
-
 
 mod.rdf = randomForest(target ~ ., data = train2_train[,-1], 
                        ntree=4800,importance=T)
@@ -55,8 +52,7 @@ pred.rdf = predict(mod.rdf, test2)
 
 out.rdf = data.frame(id = test2$id,
                      pred = pred.rdf)
-
-
+out.rdf %>% head
 
 #######################################################################
 
@@ -94,7 +90,6 @@ testSparse  = xgb.DMatrix(data.matrix(test2[,-c(1,length(test2))]), missing = NA
 foldsCV <- createFolds(y_train, k=20, list=TRUE, returnTrain=FALSE)
 
 
-set.seed(123)
 
 ### 모델링
 cat("modeling\n")
