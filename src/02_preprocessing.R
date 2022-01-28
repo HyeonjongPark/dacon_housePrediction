@@ -16,7 +16,7 @@ data$Kitchen.Qual %>% unique
 data$Bsmt.Qual %>% unique
 
 data1 = data %>%
-  mutate(Exter.Qual = recode(Exter.Qual , 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)) %>%
+  mutate(Exter.Qual = recode(Exter.Qual , 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)) %>%
   mutate(Kitchen.Qual = recode(Kitchen.Qual , 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)) %>%
   mutate(Bsmt.Qual = recode(Bsmt.Qual , 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5))
 
@@ -87,13 +87,6 @@ data1 = cbind(data1$division,
 
 
 
-# 시각화
-ggplot(data = data1[!is.na(data1$target),], aes(x = total.Price.Index, y = target)) +
-  geom_point(col = 'blue') + 
-  geom_smooth(method = 'lm', se = FALSE, color = 'black', aes(group = 1)) +
-  geom_text_repel(aes(label = ifelse(data1$total.Price.Index[!is.na(data1$target)] < 11, #price 4500이상 텍스트 표기
-                                     rownames(data1), '')))
-
 
 
 colnames(data1)[1] = "division"
@@ -101,9 +94,27 @@ colnames(data1)[2] = "id"
 colnames(data1)[ncol(data1)] = "target"
 
 # 이상치 제거
-#data1 = data1[(data1$division == "train") & !(data1$id %in% c("1145", "1205")),]
-data1 = data1[-1145,]
-data1 = data1[-1204,]
+library(car)
+
+outlierTest_lm = lm(target ~ total.Price.Index, data=data1)
+outlierTest(outlierTest_lm)
+# data1 = data1[-1145,]
+# data1 = data1[-1204,]
+data1 = data1[-c(405,1081,1205),]
+
+
+ggplot(data = data1[!is.na(data1$target),], aes(x = total.Price.Index, y = target)) +
+  geom_point(col = 'blue') + 
+  geom_smooth(method = 'lm', se = FALSE, color = 'black', aes(group = 1))
+
+
+# ggplot(data = data1[!is.na(data1$target),], aes(x = total.Price.Index, y = target)) +
+#   geom_point(col = 'blue') + 
+#   geom_smooth(method = 'lm', se = FALSE, color = 'black', aes(group = 1)) +
+#   geom_text_repel(aes(label = ifelse(data1$total.Price.Index[!is.na(data1$target)] < 11, #price 4500이상 텍스트 표기
+#                                      rownames(data1), '')))
+
+
 
 
 data1 = data1 %>% relocate(target, .after = last_col())
