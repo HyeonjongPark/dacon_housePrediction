@@ -23,32 +23,57 @@ data1 = data %>%
 
 colSums(is.na(data1)) # 결측치 미존재
 
-data1 = data1 %>% mutate(Garage.Area.Cars = Garage.Area / Garage.Cars)
+# data1 = data1 %>% mutate(Garage.Area.Cars = Garage.Area / Garage.Cars)
 
+
+# 이상치 검출
 data1 %>% filter(Garage.Yr.Blt == max(Garage.Yr.Blt)) # 2007 년을 2207로 오기재 했다고 가정
 data1$Garage.Yr.Blt[data1$Garage.Yr.Blt == 2207] = 2007
-
 data1 %>% head
 
+
 # 파생변수 추가
-data1 = data1 %>% mutate(comb.Qual = Overall.Qual + Exter.Qual + Kitchen.Qual + Bsmt.Qual)
+data1 = data1 %>% mutate(comb.Qual = Exter.Qual + Kitchen.Qual + Bsmt.Qual)
 
 data1 = data1 %>% mutate(Garage.Yr.Blt_cal = 2011 - Garage.Yr.Blt,
                          Year.Remod.Add_cal = 2011 - Year.Remod.Add,
                          Year.Built_cal = 2011 - Year.Built)
 
-data1 = data1 %>% mutate(comb.Built = Year.Built_cal + Year.Remod.Add_cal + Garage.Yr.Blt_cal)
-# data1 = data1 %>% mutate(comb.Area = Gr.Liv.Area + Garage.Area + Total.Bsmt.SF + X1st.Flr.SF)
-# data1 = data1 %>% mutate(comb.roomCount = Garage.Cars + Full.Bath)
-# data1 = data1 %>% mutate(comb.plusAll = abs(comb.Qual) * (abs(comb.Area) + abs(comb.roomCount)) - (abs(comb.Qual) * abs(comb.Built)))
+data1 %>% head
+
+data1 = data1 %>% mutate(comb.Built = Year.Built_cal + Year.Remod.Add_cal)
+data1 = data1 %>% mutate(comb.Area = Gr.Liv.Area + Garage.Area + Total.Bsmt.SF + X1st.Flr.SF)
+data1 = data1 %>% mutate(total.Price.Index = Overall.Qual * comb.Qual * comb.Area)
+
+#data1 = data1 %>% mutate(comb.plusAll = abs(comb.Qual) * (abs(comb.Area)) - (abs(comb.Qual) * abs(comb.Built)))
 
 
-# data1$Year.Remod.Add = NULL
-# data1$Garage.Yr.Blt = NULL
+data1$Year.Remod.Add = NULL
+data1$Garage.Yr.Blt = NULL
 # data1$Year.Built = NULL
+
 # data1$Year.Remod.Add_cal = NULL
 # data1$Garage.Yr.Blt_cal = NULL
 # data1$Year.Built_cal = NULL
+
+data1$Exter.Qual = NULL
+data1$Kitchen.Qual = NULL
+data1$Bsmt.Qual = NULL # 0.0944
+
+data1$Overall.Qual = NULL
+data1$comb.Qual = NULL
+
+data1$comb.Area = NULL
+
+
+
+
+# 시각화
+ggplot(data = data1[!is.na(data1$target),], aes(x = total.Price.Index, y = target)) +
+  geom_point(col = 'blue') + 
+  geom_smooth(method = 'lm', se = FALSE, color = 'black', aes(group = 1))
+
+
 
 
 
@@ -62,15 +87,30 @@ data1 = cbind(data1$division,
 
 
 
+# 시각화
+ggplot(data = data1[!is.na(data1$target),], aes(x = total.Price.Index, y = target)) +
+  geom_point(col = 'blue') + 
+  geom_smooth(method = 'lm', se = FALSE, color = 'black', aes(group = 1)) +
+  geom_text_repel(aes(label = ifelse(data1$total.Price.Index[!is.na(data1$target)] < 11, #price 4500이상 텍스트 표기
+                                     rownames(data1), '')))
+
+
+
 colnames(data1)[1] = "division"
 colnames(data1)[2] = "id"
 colnames(data1)[ncol(data1)] = "target"
 
+# 이상치 제거
+#data1 = data1[(data1$division == "train") & !(data1$id %in% c("1145", "1205")),]
+data1 = data1[-1145,]
+data1 = data1[-1204,]
 
 
 data1 = data1 %>% relocate(target, .after = last_col())
 
-cor(data1[!is.na(data$target) ,3:ncol(data1)]) %>% tail
+# 상관 계수 확인 후 - 상관성 높은 변수 drop
+cor(data1[!is.na(data1$target) ,3:ncol(data1)]) %>% tail
+DataExplorer::plot_correlation(data1[!is.na(data1$target) ,3:ncol(data1)])
 
 
 write.csv(data1, paste0("./data/prep/",sub_ver,".csv"), row.names = FALSE)

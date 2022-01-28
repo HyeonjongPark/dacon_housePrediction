@@ -9,3 +9,7 @@ library(e1071)
 library(DataExplorer)
 library(data.table)
 source("./src/99_function.R")
+
+library(reticulate)
+use_python("/usr/local/bin/python")
+library(ggrepel)

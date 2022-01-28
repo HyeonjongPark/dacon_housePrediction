@@ -9,7 +9,7 @@ source("./src/04_dataMart.R", encoding = "UTF-8")
 ################## split -> train, test     ########################### 
 ################## lm   + 다중공선성 확인   ########################### 
 #######################################################################
-set.seed(123)
+set.seed(3885)
 
 proportion = 0.7
 idx = sample(1:nrow(train2), size = round(proportion * nrow(train2)))
@@ -39,10 +39,6 @@ summary(mod.lm2)
 
 
 
-
-
-
-
 pred.lm = predict(mod.lm2, train2_valid[,-c(1,ncol(train2_valid))])
 
 out.lm = data.frame(id = train2_valid$id,
@@ -52,6 +48,10 @@ out.lm = data.frame(id = train2_valid$id,
 
 forecast::accuracy(out.lm$real, out.lm$pred)
 
+
+
+train2_train = train2_train[,c("id", names(mod.lm2$coefficients)[-1], "target")]
+train2_valid = train2_valid[,c("id", names(mod.lm2$coefficients)[-1], "target")]
 
 #######################################################################
 ############################ RF ####################################### 
@@ -74,7 +74,6 @@ out.rdf = data.frame(id = train2_valid$id,
 
 forecast::accuracy(out.rdf$real, out.rdf$pred)
 
-NMAE(out$real, out.rdf$pred)
 
 # for(i in 1:10) {
 #   
@@ -124,7 +123,6 @@ out.gbm = data.frame(id = train2_valid$id,
 
 forecast::accuracy(out.gbm$real, out.gbm$pred)
 
-NMAE(out$real, out$gbm_pred)
 #######################################################################
 
 #######################################################################
@@ -175,8 +173,6 @@ out.xgb = data.frame(id = train2_valid$id,
 
 
 forecast::accuracy(out.xgb$real, out.xgb$pred)
-
-NMAE(out$real, out.xgb$pred)
 
 
 #######################################################################
@@ -232,8 +228,6 @@ out.lgb = data.frame(id = train2_valid$id,
 
 forecast::accuracy(out.lgb$real, out.lgb$pred)
 
-NMAE(out$real, out.lgb$pred)
-
 
 
 #######################################################################
@@ -268,22 +262,38 @@ out.svr = data.frame(id = train2_valid$id,
 
 forecast::accuracy(out.svr$real, out.svr$pred)
 
-NMAE(out$real, out.svr$pred)
 
 #######################################################################
+
+
+#######################################################################
+############################ CB ####################################### 
+#######################################################################
+
+pred.cb = read.csv("./out/cb/cb1_valid.csv")
+pred.cb = pred.cb$target
+out.cb = data.frame(id = train2_valid$id,
+                     real = train2_valid$target,
+                     pred = pred.cb)
+out.cb = as.data.frame(out.cb)
+
+#######################################################################
+
 
 
 #######################################################################
 ############################ NGB ###################################### 
 #######################################################################
 
+
+
 pred.ngb = read.csv("./out/ngb/ngb1_valid.csv")
 pred.ngb = pred.ngb$target
 out.ngb = data.frame(id = train2_valid$id,
                      real = train2_valid$target,
                      pred = pred.ngb)
-out.ngb %>% head
-NMAE(out$real, out.ngb$pred)
+out.ngb = as.data.frame(out.ngb)
+
 #######################################################################
 
 
@@ -300,6 +310,7 @@ colnames(out.gbm)[3] = "gbm_pred"
 colnames(out.xgb)[3] = "xgb_pred"
 colnames(out.lgb)[3] = "lgb_pred"
 colnames(out.svr)[3] = "svr_pred"
+colnames(out.cb)[3] = "cb_pred"
 colnames(out.ngb)[3] = "ngb_pred"
 
 out = do.call("cbind", list(out.lm,
@@ -308,6 +319,7 @@ out = do.call("cbind", list(out.lm,
                             out.xgb,
                             out.lgb,
                             out.svr,
+                            out.cb,
                             out.ngb))
 
 out = out[c(1,2,grep("pred",colnames(out)))]
@@ -320,6 +332,7 @@ NMAE(out$real, out$gbm_pred)
 NMAE(out$real, out$xgb_pred)
 NMAE(out$real, out$lgb_pred)
 NMAE(out$real, out$svr_pred)
+NMAE(out$real, out$cb_pred)
 NMAE(out$real, out$ngb_pred)
 
 
@@ -332,32 +345,47 @@ NMAE(out$real, out$ngb_pred)
 # NMAE(out$real, out$lm_pred*0.50 + out$rdf_pred *0.15 + out$gbm_pred *0.10 + out$xgb_pred *0.15 + out$lgb_pred*0.10 + out$svr_pred *0.00) # 8654
 
 
+NMAE(out$real, out$rdf_pred *0.40 + out$ngb_pred*0.60)
+NMAE(out$real, out$rdf_pred *0.450 + out$xgb_pred *0.100 + out$ngb_pred*0.450)
+
+NMAE(out$real, out$lm_pred*0.375 + out$rdf_pred *0.100 + out$gbm_pred *0.000 + out$xgb_pred *0.100 + out$ngb_pred*0.425)
+# 0.9537
+# 0.9446
+NMAE(out$real, out$lm_pred*0.40 + out$rdf_pred *0.20 + out$xgb_pred *0.25 + out$ngb_pred*0.15 ) # 939
+
+
+
+
+NMAE(out$real, out$rdf_pred *0.225 + out$gbm_pred *0.150 + out$xgb_pred *0.175 + out$ngb_pred*0.450) # 0.855
 NMAE(out$real, out$lm_pred*0.35 + out$rdf_pred *0.35 + out$gbm_pred *0.10 + out$xgb_pred *0.20 + out$lgb_pred*0.00 + out$svr_pred *0.00) # 8659
 NMAE(out$real, out$lm_pred*0.50 + out$rdf_pred *0.15 + out$gbm_pred *0.10 + out$xgb_pred *0.15 + out$lgb_pred*0.10 + out$svr_pred *0.00) # 8783
 NMAE(out$real, out$lm_pred*0.325 + out$rdf_pred *0.225 + out$gbm_pred *0.150 + out$xgb_pred *0.175 + out$ngb_pred*0.125) # 0.855
 
 
-# pred_rate = seq(0,1,0.025)
+# pred_rate = seq(0,1,0.05)
 # 
 # rate_df = data.frame()
 # for(lm_rate in pred_rate) {
 #   for(rdf_rate in pred_rate) {
 #     for(gbm_rate in pred_rate) {
 #       for(xgb_rate in pred_rate) {
-#         for(ngb_rate in pred_rate) {
+#         for(svr_rate in pred_rate) {
+#           for(ngb_rate in pred_rate) {
 # 
 #             eval_nmae = NMAE(out$real,
-#                    out$lm_pred*lm_rate + out$rdf_pred*rdf_rate + out$gbm_pred*gbm_rate + out$xgb_pred*xgb_rate + out$ngb_pred*ngb_rate)
+#                    out$lm_pred*lm_rate + out$rdf_pred*rdf_rate + out$gbm_pred*gbm_rate + out$xgb_pred*xgb_rate + out$svr_pred*svr_rate + out$ngb_pred*ngb_rate)
 #             if(lm_rate + rdf_rate + gbm_rate + xgb_rate + ngb_rate == 1) {
 #               tmp = data.frame(lm_rate = lm_rate,
 #                                rdf_rate = rdf_rate,
 #                                gbm_rate = gbm_rate,
 #                                xgb_rate = xgb_rate,
+#                                svr_rate = svr_rate,
 #                                ngb_rate = ngb_rate,
 #                                nmae = eval_nmae)
 #               rate_df = rbind(rate_df, tmp)
 # 
 #             }
+#           }
 #         }
 #       }
 #     }
@@ -366,4 +394,39 @@ NMAE(out$real, out$lm_pred*0.325 + out$rdf_pred *0.225 + out$gbm_pred *0.150 + o
 # }
 # Sys.time() # 2시간 소요
 # rate_df %>% arrange(nmae) %>% head
+# rate_df %>% tail
+
+
+
+
+
+
+
+
+
+
+pred_rate = seq(0,1,0.05)
+
+rate_df = data.frame()
+
+for(rdf_rate in pred_rate) {
+  for(xgb_rate in pred_rate) {
+    for(ngb_rate in pred_rate) {
+        eval_nmae = NMAE(out$real,
+                         out$rdf_pred*rdf_rate + out$xgb_pred*xgb_rate + out$ngb_pred*ngb_rate)
+        if(rdf_rate + xgb_rate + ngb_rate == 1) {
+          tmp = data.frame(rdf_rate = rdf_rate,
+                           xgb_rate = xgb_rate,
+                           ngb_rate = ngb_rate,
+                           nmae = eval_nmae)
+          rate_df = rbind(rate_df, tmp)
+        }
+      }
+  }
+  print(rdf_rate)
+}
+Sys.time() # 2시간 소요
+rate_df %>% arrange(nmae) %>% head
+rate_df %>% tail
+
 

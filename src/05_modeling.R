@@ -1,10 +1,10 @@
 
-
+#rm(list = ls())
 source("./src/04_dataMart.R", encoding = "UTF-8")
 
 
 
-set.seed(123)
+set.seed(3885)
 
 ## 제출용
 
@@ -38,14 +38,18 @@ out.lm = data.frame(id = test2$id,
                     pred = pred.lm)
 
 
+train2 = train2[,c("id", names(mod.lm2$coefficients)[-1], "target")]
+test2 = test2[,c("id", names(mod.lm2$coefficients)[-1], "target")]
+
+
 #######################################################################
 ############################ RF ####################################### 
 #######################################################################
 
 
 
-mod.rdf = randomForest(target ~ ., data = train2_train[,-1], 
-                       ntree=4800,importance=T)
+mod.rdf = randomForest(target ~ ., data = train2[,-1], 
+                       ntree=1000,importance=T)
 
 pred.rdf = predict(mod.rdf, test2)
 
@@ -229,6 +233,7 @@ out.svr = data.frame(id = test2$id,
 
 
 #######################################################################
+
 
 
 
