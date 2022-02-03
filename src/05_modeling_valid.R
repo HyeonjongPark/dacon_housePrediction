@@ -364,71 +364,71 @@ NMAE(out$real, out$lm_pred*0.50 + out$rdf_pred *0.15 + out$gbm_pred *0.10 + out$
 NMAE(out$real, out$lm_pred*0.325 + out$rdf_pred *0.225 + out$gbm_pred *0.150 + out$xgb_pred *0.175 + out$ngb_pred*0.125) # 0.855
 
 
-pred_rate = seq(0,1,0.05)
-
-rate_df = data.frame()
-for(lm_rate in pred_rate) {
-  for(rdf_rate in pred_rate) {
-    for(gbm_rate in pred_rate) {
-      for(xgb_rate in pred_rate) {
-        for(svr_rate in pred_rate) {
-          for(ngb_rate in pred_rate) {
-
-            eval_nmae = NMAE(out$real,
-                   out$lm_pred*lm_rate + out$rdf_pred*rdf_rate + out$gbm_pred*gbm_rate + out$xgb_pred*xgb_rate + out$svr_pred*svr_rate + out$ngb_pred*ngb_rate)
-            if(lm_rate + rdf_rate + gbm_rate + xgb_rate + svr_rate + ngb_rate == 1) {
-              tmp = data.frame(lm_rate = lm_rate,
-                               rdf_rate = rdf_rate,
-                               gbm_rate = gbm_rate,
-                               xgb_rate = xgb_rate,
-                               svr_rate = svr_rate,
-                               ngb_rate = ngb_rate,
-                               nmae = eval_nmae)
-              rate_df = rbind(rate_df, tmp)
-
-            }
-          }
-        }
-      }
-    }
-  }
-  print(lm_rate)
-}
-Sys.time() # 2시간 소요
-rate_df %>% arrange(nmae) %>% head
-rate_df %>% tail
-
-
-
-
-
-
-
-
-
-# 
 # pred_rate = seq(0,1,0.05)
 # 
 # rate_df = data.frame()
+# for(lm_rate in pred_rate) {
+#   for(rdf_rate in pred_rate) {
+#     for(gbm_rate in pred_rate) {
+#       for(xgb_rate in pred_rate) {
+#         for(svr_rate in pred_rate) {
+#           for(ngb_rate in pred_rate) {
 # 
-# for(rdf_rate in pred_rate) {
-#   for(xgb_rate in pred_rate) {
-#     for(ngb_rate in pred_rate) {
-#         eval_nmae = NMAE(out$real,
-#                          out$rdf_pred*rdf_rate + out$xgb_pred*xgb_rate + out$ngb_pred*ngb_rate)
-#         if(rdf_rate + xgb_rate + ngb_rate == 1) {
-#           tmp = data.frame(rdf_rate = rdf_rate,
-#                            xgb_rate = xgb_rate,
-#                            ngb_rate = ngb_rate,
-#                            nmae = eval_nmae)
-#           rate_df = rbind(rate_df, tmp)
+#             eval_nmae = NMAE(out$real,
+#                    out$lm_pred*lm_rate + out$rdf_pred*rdf_rate + out$gbm_pred*gbm_rate + out$xgb_pred*xgb_rate + out$svr_pred*svr_rate + out$ngb_pred*ngb_rate)
+#             if(lm_rate + rdf_rate + gbm_rate + xgb_rate + svr_rate + ngb_rate == 1) {
+#               tmp = data.frame(lm_rate = lm_rate,
+#                                rdf_rate = rdf_rate,
+#                                gbm_rate = gbm_rate,
+#                                xgb_rate = xgb_rate,
+#                                svr_rate = svr_rate,
+#                                ngb_rate = ngb_rate,
+#                                nmae = eval_nmae)
+#               rate_df = rbind(rate_df, tmp)
+# 
+#             }
+#           }
 #         }
 #       }
+#     }
 #   }
-#   print(rdf_rate)
+#   print(lm_rate)
 # }
 # Sys.time() # 2시간 소요
 # rate_df %>% arrange(nmae) %>% head
 # rate_df %>% tail
+
+
+
+
+
+
+
+
+
+
+pred_rate = seq(0,1,0.05)
+
+rate_df = data.frame()
+
+for(rdf_rate in pred_rate) {
+  for(gbm_rate in pred_rate) {
+    for(ngb_rate in pred_rate) {
+        eval_nmae = NMAE(out$real,
+                         out$rdf_pred*rdf_rate + out$gbm_pred*gbm_rate + out$ngb_pred*ngb_rate)
+        if(rdf_rate + gbm_rate + ngb_rate == 1) {
+          tmp = data.frame(rdf_rate = rdf_rate,
+                           gbm_rate = gbm_rate,
+                           ngb_rate = ngb_rate,
+                           nmae = eval_nmae)
+          rate_df = rbind(rate_df, tmp)
+        }
+      }
+  }
+  print(rdf_rate)
+}
+Sys.time() # 2시간 소요
+rate_df %>% arrange(nmae) %>% head
+rate_df %>% tail
 
 

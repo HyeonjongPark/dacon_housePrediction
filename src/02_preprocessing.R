@@ -16,9 +16,9 @@ data$Kitchen.Qual %>% unique
 data$Bsmt.Qual %>% unique
 
 data1 = data %>%
-  mutate(Exter.Qual = recode(Exter.Qual , 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)) %>%
-  mutate(Kitchen.Qual = recode(Kitchen.Qual , 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)) %>%
-  mutate(Bsmt.Qual = recode(Bsmt.Qual , 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5))
+  mutate(Exter.Qual = dplyr::recode(Exter.Qual , 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)) %>%
+  mutate(Kitchen.Qual = dplyr::recode(Kitchen.Qual , 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5)) %>%
+  mutate(Bsmt.Qual = dplyr::recode(Bsmt.Qual , 'Po' = 1, 'Fa' = 2, 'TA' = 3, 'Gd' = 4, 'Ex' = 5))
 
 
 colSums(is.na(data1)) # 결측치 미존재
@@ -56,14 +56,14 @@ data1$Garage.Yr.Blt = NULL
 # data1$Garage.Yr.Blt_cal = NULL
 # data1$Year.Built_cal = NULL
 
-data1$Exter.Qual = NULL
-data1$Kitchen.Qual = NULL
-data1$Bsmt.Qual = NULL # 0.0944
-
-data1$Overall.Qual = NULL
-data1$comb.Qual = NULL
-
-data1$comb.Area = NULL
+# data1$Exter.Qual = NULL
+# data1$Kitchen.Qual = NULL
+# data1$Bsmt.Qual = NULL # 0.0944
+# 
+# data1$Overall.Qual = NULL
+# data1$comb.Qual = NULL
+# 
+# data1$comb.Area = NULL
 
 
 
@@ -98,9 +98,11 @@ library(car)
 
 outlierTest_lm = lm(target ~ total.Price.Index, data=data1)
 outlierTest(outlierTest_lm)
-# data1 = data1[-1145,]
-# data1 = data1[-1204,]
-data1 = data1[-c(405,1081,1205),]
+olt = outlierTest(outlierTest_lm) 
+olt = as.numeric(row.names(as.data.frame(olt$rstudent)))
+
+data1 = data1[!(as.numeric(rownames(data1)) %in% olt),]
+
 
 
 ggplot(data = data1[!is.na(data1$target),], aes(x = total.Price.Index, y = target)) +
@@ -108,11 +110,6 @@ ggplot(data = data1[!is.na(data1$target),], aes(x = total.Price.Index, y = targe
   geom_smooth(method = 'lm', se = FALSE, color = 'black', aes(group = 1))
 
 
-# ggplot(data = data1[!is.na(data1$target),], aes(x = total.Price.Index, y = target)) +
-#   geom_point(col = 'blue') + 
-#   geom_smooth(method = 'lm', se = FALSE, color = 'black', aes(group = 1)) +
-#   geom_text_repel(aes(label = ifelse(data1$total.Price.Index[!is.na(data1$target)] < 11, #price 4500이상 텍스트 표기
-#                                      rownames(data1), '')))
 
 
 
