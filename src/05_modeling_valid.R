@@ -75,30 +75,6 @@ out.rdf = data.frame(id = train2_valid$id,
 forecast::accuracy(out.rdf$real, out.rdf$pred)
 
 
-# for(i in 1:10) {
-#   
-#   proportion = 0.7
-#   idx = sample(1:nrow(train2), size = round(proportion * nrow(train2)))
-#   train2_train = train2[idx, ]
-#   train2_valid = train2[-idx, ]
-#   
-#   y_train = train2_train$target
-#   y_test = train2_valid$target
-#   
-#   mod.rdf = randomForest(target ~ ., data = train2_train[,-1], 
-#                          ntree=1000,importance=T)
-#   pred.tmp = predict(mod.rdf, train2_valid)
-#   pred.rdf = (pred.rdf + pred.tmp) / 2
-#   
-#   out.rdf = data.frame(id = train2_valid$id,
-#                        real = train2_valid$target,
-#                        pred = pred.rdf)
-#   
-#   print(NMAE(out$real, out.rdf$pred))
-#   
-# }
-
-
 #######################################################################
 
 #######################################################################
@@ -135,9 +111,6 @@ trainSparse = xgb.DMatrix(data.matrix(train2_train[,-c(1,length(train2_train))])
 testSparse  = xgb.DMatrix(data.matrix(train2_valid[,-c(1,length(train2_valid))]), missing = NA)
 
 foldsCV <- createFolds(y_train, k=20, list=TRUE, returnTrain=FALSE)
-
-### 모델링
-cat("modeling\n")
 
 param.xgb <- list(subsample = 1
                   , max_depth = 5
@@ -323,9 +296,8 @@ out = do.call("cbind", list(out.lm,
                             out.ngb))
 
 out = out[c(1,2,grep("pred",colnames(out)))]
-out %>% head
-#out[,2:ncol(out)] = 10^(out[,2:ncol(out)])-1
 out[,2:ncol(out)] = exp(out[,2:ncol(out)])-1
+
 NMAE(out$real, out$lm_pred)
 NMAE(out$real, out$rdf_pred)
 NMAE(out$real, out$gbm_pred)
@@ -336,32 +308,6 @@ NMAE(out$real, out$cb_pred)
 NMAE(out$real, out$ngb_pred)
 
 
-# comPlusVec = train2_valid %>% mutate(comb.Built = Year.Built_cal + Year.Remod.Add_cal + Garage.Yr.Blt_cal) %>% 
-#   transform(comb.Area = Gr.Liv.Area + Garage.Area + Total.Bsmt.SF + X1st.Flr.SF) %>% 
-#   transform(comb.roomCount = Garage.Cars + Full.Bath) %>% 
-#   transform(comb.plusAll = abs(comb.Qual) * (abs(comb.Area) + abs(comb.roomCount)) - (abs(comb.Qual) * abs(comb.Built))) %>% 
-#   select(comb.plusAll)
-# comPlusVec$comb.plusAll
-# NMAE(out$real, out$lm_pred*0.50 + out$rdf_pred *0.15 + out$gbm_pred *0.10 + out$xgb_pred *0.15 + out$lgb_pred*0.10 + out$svr_pred *0.00) # 8654
-
-
-NMAE(out$real, out$lm_pred*0.30 + out$rdf_pred *0.40 + out$ngb_pred*0.30) # 854
-NMAE(out$real, out$rdf_pred *0.50 + out$ngb_pred*0.50) # 8654
-NMAE(out$real, out$rdf_pred *0.40 + out$ngb_pred*0.60)
-NMAE(out$real, out$rdf_pred *0.450 + out$xgb_pred *0.100 + out$ngb_pred*0.450)
-
-NMAE(out$real, out$lm_pred*0.375 + out$rdf_pred *0.100 + out$gbm_pred *0.000 + out$xgb_pred *0.100 + out$ngb_pred*0.425)
-# 0.9537
-# 0.9446
-NMAE(out$real, out$lm_pred*0.40 + out$rdf_pred *0.20 + out$xgb_pred *0.25 + out$ngb_pred*0.15 ) # 939
-
-
-
-
-NMAE(out$real, out$rdf_pred *0.225 + out$gbm_pred *0.150 + out$xgb_pred *0.175 + out$ngb_pred*0.450) # 0.855
-NMAE(out$real, out$lm_pred*0.35 + out$rdf_pred *0.35 + out$gbm_pred *0.10 + out$xgb_pred *0.20 + out$lgb_pred*0.00 + out$svr_pred *0.00) # 8659
-NMAE(out$real, out$lm_pred*0.50 + out$rdf_pred *0.15 + out$gbm_pred *0.10 + out$xgb_pred *0.15 + out$lgb_pred*0.10 + out$svr_pred *0.00) # 8783
-NMAE(out$real, out$lm_pred*0.325 + out$rdf_pred *0.225 + out$gbm_pred *0.150 + out$xgb_pred *0.175 + out$ngb_pred*0.125) # 0.855
 
 
 # pred_rate = seq(0,1,0.05)
@@ -394,7 +340,6 @@ NMAE(out$real, out$lm_pred*0.325 + out$rdf_pred *0.225 + out$gbm_pred *0.150 + o
 #   }
 #   print(lm_rate)
 # }
-# Sys.time() # 2시간 소요
 # rate_df %>% arrange(nmae) %>% head
 # rate_df %>% tail
 
@@ -404,31 +349,27 @@ NMAE(out$real, out$lm_pred*0.325 + out$rdf_pred *0.225 + out$gbm_pred *0.150 + o
 
 
 
-
-
-
-pred_rate = seq(0,1,0.05)
-
-rate_df = data.frame()
-
-for(rdf_rate in pred_rate) {
-  for(gbm_rate in pred_rate) {
-    for(ngb_rate in pred_rate) {
-        eval_nmae = NMAE(out$real,
-                         out$rdf_pred*rdf_rate + out$gbm_pred*gbm_rate + out$ngb_pred*ngb_rate)
-        if(rdf_rate + gbm_rate + ngb_rate == 1) {
-          tmp = data.frame(rdf_rate = rdf_rate,
-                           gbm_rate = gbm_rate,
-                           ngb_rate = ngb_rate,
-                           nmae = eval_nmae)
-          rate_df = rbind(rate_df, tmp)
-        }
-      }
-  }
-  print(rdf_rate)
-}
-Sys.time() # 2시간 소요
-rate_df %>% arrange(nmae) %>% head
-rate_df %>% tail
+# pred_rate = seq(0,1,0.05)
+# 
+# rate_df = data.frame()
+# 
+# for(rdf_rate in pred_rate) {
+#   for(gbm_rate in pred_rate) {
+#     for(ngb_rate in pred_rate) {
+#         eval_nmae = NMAE(out$real,
+#                          out$rdf_pred*rdf_rate + out$gbm_pred*gbm_rate + out$ngb_pred*ngb_rate)
+#         if(rdf_rate + gbm_rate + ngb_rate == 1) {
+#           tmp = data.frame(rdf_rate = rdf_rate,
+#                            gbm_rate = gbm_rate,
+#                            ngb_rate = ngb_rate,
+#                            nmae = eval_nmae)
+#           rate_df = rbind(rate_df, tmp)
+#         }
+#       }
+#   }
+#   print(rdf_rate)
+# }
+# rate_df %>% arrange(nmae) %>% head
+# rate_df %>% tail
 
 

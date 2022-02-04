@@ -27,11 +27,6 @@ mod.lm2 = step(mod.lm1, direction = "both")
 summary(mod.lm2)
 
 
-
-
-
-
-
 pred.lm = predict(mod.lm2, test2[,-c(1,ncol(test2))])
 
 out.lm = data.frame(id = test2$id,
@@ -64,7 +59,6 @@ out.rdf %>% head
 ############################ GBM ###################################### 
 #######################################################################
 
-# GBM
 trainSparse <- sparse.model.matrix(target~. , data = train2[,-1])
 testSparse <- sparse.model.matrix(~. , data = test2[,-c(1, ncol(test2))])
 
@@ -94,10 +88,6 @@ testSparse  = xgb.DMatrix(data.matrix(test2[,-c(1,length(test2))]), missing = NA
 foldsCV <- createFolds(y_train, k=20, list=TRUE, returnTrain=FALSE)
 
 
-
-### 모델링
-cat("modeling\n")
-
 param.xgb <- list(subsample = 1
                   , max_depth = 5
                   , colsample_bytree = 0.5
@@ -107,17 +97,16 @@ param.xgb <- list(subsample = 1
 
 
 
-xgb_cv <- xgb.cv(data=trainSparse,
-                 params=param.xgb,
-                 nrounds=100,
-                 prediction=TRUE,
-                 maximize=TRUE,
-                 folds=foldsCV,
-                 #early_stopping_rounds = 50,
-                 print_every_n = 5
-)
+# xgb_cv <- xgb.cv(data=trainSparse,
+#                  params=param.xgb,
+#                  nrounds=100,
+#                  prediction=TRUE,
+#                  maximize=TRUE,
+#                  folds=foldsCV,
+#                  #early_stopping_rounds = 50,
+#                  print_every_n = 5
+# )
 
-#mod.xgb = xgboost(data = trainSparse, nrounds = 300)
 mod.xgb = xgboost(data = trainSparse,
                   eta = 0.05,
                   nfold = 10, 

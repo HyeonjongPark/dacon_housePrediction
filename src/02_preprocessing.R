@@ -23,8 +23,6 @@ data1 = data %>%
 
 colSums(is.na(data1)) # 결측치 미존재
 
-# data1 = data1 %>% mutate(Garage.Area.Cars = Garage.Area / Garage.Cars)
-
 
 # 이상치 검출
 data1 %>% filter(Garage.Yr.Blt == max(Garage.Yr.Blt)) # 2007 년을 2207로 오기재 했다고 가정
@@ -39,31 +37,14 @@ data1 = data1 %>% mutate(Garage.Yr.Blt_cal = 2011 - Garage.Yr.Blt,
                          Year.Remod.Add_cal = 2011 - Year.Remod.Add,
                          Year.Built_cal = 2011 - Year.Built)
 
-data1 %>% head
-
 data1 = data1 %>% mutate(comb.Built = Year.Built_cal + Year.Remod.Add_cal)
 data1 = data1 %>% mutate(comb.Area = Gr.Liv.Area + Garage.Area + Total.Bsmt.SF + X1st.Flr.SF)
 data1 = data1 %>% mutate(total.Price.Index = Overall.Qual * comb.Qual * comb.Area)
 
-#data1 = data1 %>% mutate(comb.plusAll = abs(comb.Qual) * (abs(comb.Area)) - (abs(comb.Qual) * abs(comb.Built)))
 
 
 data1$Year.Remod.Add = NULL
 data1$Garage.Yr.Blt = NULL
-# data1$Year.Built = NULL
-
-# data1$Year.Remod.Add_cal = NULL
-# data1$Garage.Yr.Blt_cal = NULL
-# data1$Year.Built_cal = NULL
-
-# data1$Exter.Qual = NULL
-# data1$Kitchen.Qual = NULL
-# data1$Bsmt.Qual = NULL # 0.0944
-# 
-# data1$Overall.Qual = NULL
-# data1$comb.Qual = NULL
-# 
-# data1$comb.Area = NULL
 
 
 
@@ -94,8 +75,6 @@ colnames(data1)[2] = "id"
 colnames(data1)[ncol(data1)] = "target"
 
 # 이상치 제거
-library(car)
-
 outlierTest_lm = lm(target ~ total.Price.Index, data=data1)
 outlierTest(outlierTest_lm)
 olt = outlierTest(outlierTest_lm) 
